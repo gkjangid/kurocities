@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>{{ activity.title }}</title>
+
+    <style>
+        td, th {
+            padding: 0.5em;
+        }
+        td.answer__table {
+            text-align: center;
+        }
+        td.answer__table:first-child {
+            text-align: right;
+        }
+        .question {
+            background-color: lightgrey;
+            padding: 1em 0.5em;
+        }
+        .question--text {
+            font-weight: bold;
+        }
+        .journal-entry {
+            padding-top:    0.5em;
+            padding-bottom: 0.5em;
+        }
+        .journal-entry--date {
+            font-size: smaller;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <h3>{{ activity.title }}</h3>
+
+    {% if questions|length %}
+    <table border='1' cellspacing='0' width='100%'>
+        <thead>
+            <tr>
+                <th>Team</th>
+                <th>User</th>
+                <th>Answer</th>
+                <th>Picture</th>
+            </tr>
+        </thead>
+        {% for question in questions %}
+        <tbody>
+            <tr>
+                <td class='question' colspan='99'>
+                        <span class='question--no'>Question {{ forloop.counter }}. </span>
+                        <span class='question--text'>{{ question.question }}</span>
+                </td>
+            </tr>
+
+            {% for answer in question.answers %}
+            <tr>
+                <td>{{ answer.team | default:'N/A' }}</td>
+                <td>{{ answer.user }}</td>
+
+                <td>
+                    {% if question.data.questionType == 'table' %}
+                        <table border='1' cellspacing='0' width='100%'>
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    {% for col in question.data.table.columns %}
+                                    <th>{{ col.label }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for row in answer.answer %}
+                                <tr>
+                                    {% for cell in row %}
+                                    <td class='answer__table'>{{ cell }}</td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% endif %}
+
+                    {% if question.data.questionType != 'table' %}
+                        {{ answer.answer }}
+                    {% endif %}
+                </td>
+
+                <td>
+                    {% if answer.upload %}
+
+                        {% if question.data.questionType != 'upload' %}
+                            <img src='http://{{ request.META.HTTP_HOST }}{{ answer.upload }}'
+                                width='150' height='150'
+                            >
+                        {% endif %}
+
+                        <!-- BB#274 -->
+                        {% if question.data.questionType == 'upload' %}
+                            <img src='http://{{ request.META.HTTP_HOST }}{{ answer.upload }}'
+                                width='150' height='150'
+                            >
+                        {% endif %}
+<!--
+                        {% if question.data.questionType == 'upload' %}
+                            <a href='{{ answer.upload }}'>{{ answer.answer }}</a>
+                        {% endif %}
+ -->
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+
+        </tbody>
+        {% endfor %}
+    </table>
+    {% endif %}
+
+    <hr>
+
+    <h4><u>Activity Journal</u></h4>
+
+    <ul>
+        {% for user_activity in user_activities %}
+        <li>
+            {{ user_activity.team | default:'N/A' }} : {{ user_activity.user.username }}
+
+            <ul>
+                {% for entry in user_activity.useractivityjournal_set.all %}
+                <li class='journal-entry'>
+                    <span class='journal-entry--date'>{{ entry.created | date:"D d-M-Y H:i" }}</span><br>
+                    <span class='journal-entry--text'>{{ entry.description }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </li>
+        {% endfor %}
+    </ul>
+
+</body>
+
+</html>
